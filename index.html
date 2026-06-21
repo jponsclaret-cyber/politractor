@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contenidor 40' — Optimitzador</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0c0f;color:#e8edf5;font-family:'Segoe UI',sans-serif;min-height:100vh;padding:16px;}
+input,textarea,button{font-family:inherit;}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2a3040;border-radius:2px}
+.layout{display:grid;grid-template-columns:480px 1fr;gap:16px;max-width:1400px;margin:0 auto;}
+.panel{background:#111418;border:1px solid #2a3040;border-radius:8px;margin-bottom:14px;overflow:hidden;}
+.ph{padding:10px 16px;border-bottom:1px solid #2a3040;font-size:11px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:#6b7a94;display:flex;align-items:center;gap:8px;}
+.pb{padding:16px;}
+.dot{width:6px;height:6px;border-radius:50%;background:#00e5a0;flex-shrink:0;}
+.dot.b{background:#0077ff;}.dot.o{background:#ff6b35;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:0;}
+.dbox{background:#1a1f26;border:1px solid #2a3040;border-radius:6px;padding:10px 8px;text-align:center;}
+.dbox label{display:block;font-family:monospace;font-size:10px;color:#6b7a94;margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;}
+.dbox input{background:transparent;border:none;outline:none;color:#00e5a0;font-family:monospace;font-size:15px;font-weight:700;width:100%;text-align:center;}
+.dunit{font-family:monospace;font-size:10px;color:#6b7a94;margin-top:2px;}
+.flabel{display:block;font-family:monospace;font-size:10px;color:#6b7a94;margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;}
+.finp{width:100%;background:#1a1f26;border:1px solid #2a3040;border-radius:5px;padding:7px 9px;color:#e8edf5;font-family:monospace;font-size:13px;outline:none;}
+.finp:focus{border-color:#00e5a0;}
+.ta{width:100%;background:#1a1f26;border:1px solid #2a3040;border-radius:5px;padding:9px;color:#e8edf5;font-family:monospace;font-size:12px;outline:none;resize:vertical;line-height:1.6;display:block;}
+.btnG{padding:9px 14px;background:#00e5a0;color:#000;border:none;border-radius:5px;font-weight:700;font-size:13px;cursor:pointer;}
+.btnG:hover{background:#00ffb3;}
+.btnB{padding:9px 14px;background:#0077ff;color:#fff;border:none;border-radius:5px;font-weight:700;font-size:13px;cursor:pointer;}
+.btnCalc{width:100%;padding:13px;background:#00e5a0;color:#000;font-size:15px;font-weight:800;border-radius:6px;border:none;cursor:pointer;margin-top:8px;}
+.btnCalc:hover{background:#00ffb3;box-shadow:0 0 20px rgba(0,229,160,.3);}
+.btnCalc:disabled{opacity:.6;cursor:not-allowed;}
+.btnMax{width:100%;padding:11px;background:#0d1117;color:#00e5a0;font-size:13px;font-weight:800;border-radius:6px;border:1px solid #00e5a040;cursor:pointer;margin-top:10px;letter-spacing:.04em;}
+.btnMax:hover{background:#0a1a0f;border-color:#00e5a0;}
+.btnMax:disabled{opacity:.5;cursor:not-allowed;}
+.btnRm{background:transparent;border:1px solid #2a3040;color:#6b7a94;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px;}
+.btnRm:hover{border-color:#ff6b35;color:#ff6b35;}
+.btnClear{background:transparent;border:1px solid #ff6b35;color:#ff6b35;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;}
+.mi{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;background:#1a1f26;border:1px solid #2a3040;border-radius:5px;padding:9px 12px;gap:10px;margin-bottom:5px;}
+.mi.zero{opacity:.45;}
+.qtyCtrl{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.qtyBtn{background:#0d1117;border:1px solid #2a3040;color:#6b7a94;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;}
+.qtyBtn:hover{border-color:#00e5a0;color:#00e5a0;}
+.mlist{max-height:464px;overflow-y:auto;}
+.bar{height:6px;background:#2a3040;border-radius:3px;overflow:hidden;margin:6px 0 3px;}
+.barf{height:100%;border-radius:3px;transition:width .5s;}
+.sbox{background:#1a1f26;border:1px solid #2a3040;border-radius:6px;padding:14px;}
+.ri{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:5px;margin-bottom:4px;font-size:12px;}
+.sep{display:flex;align-items:center;gap:10px;margin:10px 0;color:#4a5568;font-size:11px;font-family:monospace;}
+.sep::before,.sep::after{content:'';flex:1;height:1px;background:#2a3040;}
+.msgbox{margin-top:8px;padding:8px 12px;border-radius:5px;font-size:12px;}
+#header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #2a3040;flex-wrap:wrap;gap:10px;max-width:1400px;margin-left:auto;margin-right:auto;}
+canvas{width:100%;border-radius:6px;display:block;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-.03em">CONTENIDOR <span style="color:#00e5a0">40' HC</span></div>
+    <div style="font-family:monospace;font-size:11px;color:#6b7a94;margin-top:4px">Optimitzador 3D · Límit pes <span id="hdrGW">26.000</span> kg</div>
+  </div>
+  <div style="font-family:monospace;font-size:11px;background:#1a1f26;border:1px solid #2a3040;padding:5px 10px;border-radius:4px;color:#6b7a94">
+    <span id="hdrDims" style="color:#00e5a0">12000×2350×2695 mm</span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- LEFT -->
+  <div>
+    <div class="panel">
+      <div class="ph"><div class="dot"></div> Dimensions contenidor (mm) + pes</div>
+      <div class="pb">
+        <div class="grid4">
+          <div class="dbox"><label>Length</label><input type="number" id="cL" value="12000" oninput="updateHeader()"><div class="dunit">mm</div></div>
+          <div class="dbox"><label>Width</label><input type="number" id="cW" value="2350" oninput="updateHeader()"><div class="dunit">mm</div></div>
+          <div class="dbox"><label>Height</label><input type="number" id="cH" value="2695" oninput="updateHeader()"><div class="dunit">mm</div></div>
+          <div class="dbox"><label>Max GW</label><input type="number" id="cGW" value="26000" oninput="updateHeader()"><div class="dunit">kg</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="dot b"></div> Llista de màquines</div>
+      <div class="pb">
+        <div style="margin-bottom:10px">
+          <label class="flabel">Clica aquí i prem Ctrl+V des d'Excel/Sheets → s'importa sol</label>
+          <label class="flabel" style="color:#4a5568;margin-bottom:6px">Columnes: Model · QTY · Length · Width · HEIGHT · GW</label>
+          <textarea id="pasteArea" class="ta" rows="4" placeholder="Model&#9;Length&#9;Width&#9;HEIGHT&#9;GW&#10;CPDS16-XCY2G-SI&#9;1834&#9;1080&#9;2138&#9;3410"></textarea>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px">
+            <button class="btnG" onclick="importText(document.getElementById('pasteArea').value)">📋 Importar text</button>
+            <button class="btnB" onclick="pasteFromClipboard()">📎 Portaretalls</button>
+          </div>
+        </div>
+
+        <div class="sep">o afegir manualment</div>
+
+        <div style="display:grid;grid-template-columns:2fr 1.5fr 0.6fr 1fr 1fr 1fr 1fr auto;gap:5px;margin-bottom:10px;align-items:flex-end">
+          <div><label class="flabel">Name</label><input class="finp" type="text" id="fName" placeholder="Machine A" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <div><label class="flabel">Model</label><input class="finp" type="text" id="fModel" placeholder="XP-200" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <div><label class="flabel">QTY</label><input class="finp" type="number" id="fQty" placeholder="1" value="1" min="1" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <div><label class="flabel">L (mm)</label><input class="finp" type="number" id="fL" placeholder="1200" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <div><label class="flabel">W (mm)</label><input class="finp" type="number" id="fW" placeholder="800" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <div><label class="flabel">H (mm)</label><input class="finp" type="number" id="fH" placeholder="1500" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <div><label class="flabel">GW (kg)</label><input class="finp" type="number" id="fGW" placeholder="500" onkeydown="if(event.key==='Enter')addMachine()"></div>
+          <button class="btnG" onclick="addMachine()" style="margin-top:18px;padding:7px 10px">+</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-family:monospace;font-size:10px;color:#6b7a94;text-transform:uppercase;letter-spacing:.08em" id="machineCount">Cap màquina</span>
+          <button class="btnClear" id="clearBtn" style="display:none" onclick="clearMachines()">✕ Netejar tot</button>
+        </div>
+        <div class="mlist" id="machineList">
+          <div style="text-align:center;color:#6b7a94;font-size:13px;padding:16px">Afegeix màquines per començar</div>
+        </div>
+
+        <div id="msgBox" style="display:none" class="msgbox"></div>
+        <button class="btnMax" id="maxBtn" onclick="maximizeAll()">🔍 CALCULAR QUANTITATS MÀXIMES</button>
+        <button class="btnCalc" id="calcBtn" onclick="calculate()">⚡ CALCULAR OPTIMITZACIÓ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div>
+    <div class="panel">
+      <div class="ph"><div class="dot o"></div> Resultats</div>
+      <div class="pb" id="resultsPanel">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:#6b7a94;font-size:13px;gap:8px">
+          <div style="font-size:32px;opacity:.3">📦</div>
+          <div>Afegeix màquines i calcula</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="dot b"></div> Vista de planta (des de dalt)</div>
+      <div style="padding:14px">
+        <canvas id="topCanvas" height="380" style="background:#0a0c0f;margin-bottom:12px"></canvas>
+        <div id="topLabel" style="font-family:monospace;font-size:10px;color:#6b7a94;text-align:center;letter-spacing:.08em;margin-bottom:12px">— sense dades —</div>
+        <canvas id="sideCanvas" height="380" style="background:#0a0c0f"></canvas>
+        <div id="sideLabel" style="font-family:monospace;font-size:10px;color:#6b7a94;text-align:center;letter-spacing:.08em;margin-top:6px">— sense dades —</div>
+      </div>
+    </div>
+    <div class="panel" id="legendPanel" style="display:none">
+      <div class="ph"><div class="dot"></div> Llegenda</div>
+      <div class="pb" id="legendBody" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────
+const COLORS=['#00e5a0','#0077ff','#ff6b35','#a855f7','#f59e0b','#06b6d4','#ec4899','#84cc16','#f97316','#8b5cf6',
+              '#00c9ff','#ff4d6d','#c77dff','#90e0ef','#ffd166','#06d6a0','#ef476f','#118ab2'];
+let machines=[], counter=1, results=null;
+
+function updateHeader(){
+  const l=v('cL'),w=v('cW'),h=v('cH'),gw=v('cGW');
+  document.getElementById('hdrDims').textContent=l+'×'+w+'×'+h+' mm';
+  document.getElementById('hdrGW').textContent=parseInt(gw).toLocaleString('ca');
+}
+function v(id){return parseFloat(document.getElementById(id).value)||0;}
+
+// ─── Import ────────────────────────────────────────────────────
+function importText(raw){
+  if(!raw||!raw.trim()){showMsg('Res a importar.','info');return;}
+  const lines=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(!lines.length)return;
+  const header=lines[0].split('\t').map(c=>c.trim().replace(/^"|"$/g,'').toLowerCase());
+  const iModel=header.findIndex(c=>c==='model');
+  const iName=header.findIndex(c=>c==='no.'||c==='no'||c==='name');
+  const iLength=header.findIndex(c=>c==='length');
+  const iWidth=header.findIndex(c=>c==='width');
+  let iHeight=header.findIndex(c=>c.includes('ohg'));
+  if(iHeight<0)iHeight=header.findIndex(c=>c==='height'||c==='height\n(ohg height)');
+  const iQty=header.findIndex(c=>c==='qty');
+  const iGW=header.findIndex(c=>c==='gw');
+  const hasHeader=iLength>=0&&iWidth>=0&&(iHeight>=0);
+  let imported=0;
+  const nm=[];
+  lines.forEach((line,idx)=>{
+    if(idx===0&&hasHeader)return;
+    const cols=line.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));
+    if(cols.length<3)return;
+    let name,model,fl,fw,fh,fg,fqty;
+    if(hasHeader){
+      name=iName>=0?cols[iName]||('M'+(counter+imported)):('M'+(counter+imported));
+      model=iModel>=0?cols[iModel]||'':'';
+      fl=parseFloat((cols[iLength]||'').replace(',','.'));
+      fw=parseFloat((cols[iWidth]||'').replace(',','.'));
+      const ih2=header.findIndex((c,i)=>i!==iHeight&&(c.includes('oal')||c.includes('height')));
+      const hv1=iHeight>=0?parseFloat((cols[iHeight]||'').replace(',','.')):NaN;
+      const hv2=ih2>=0?parseFloat((cols[ih2]||'').replace(',','.')):NaN;
+      const hv=Math.max(isNaN(hv1)?0:hv1, isNaN(hv2)?0:hv2)||NaN;
+      fh=hv>0?hv:NaN;
+      fg=iGW>=0?parseFloat((cols[iGW]||'0').replace(',','.'))||0:0;
+      fqty=iQty>=0?Math.max(1,parseInt(cols[iQty])||1):1;
+      if((!name||name.startsWith('M'))&&model) name=model;
+    } else {
+      // Troba L i W: primer parell de valors consecutius >10
+      let ds=-1;
+      for(let i=0;i<cols.length-1;i++){
+        const a=parseFloat(cols[i].replace(',','.')),b=parseFloat((cols[i+1]||'').replace(',','.'));
+        if(!isNaN(a)&&a>10&&!isNaN(b)&&b>10){ds=i;break;}
+      }
+      if(ds<0)return;
+      let nameEnd=0;
+      for(let i=0;i<ds;i++){if(isNaN(parseFloat(cols[i].replace(',','.'))))nameEnd=i+1;}
+      if(nameEnd===0)nameEnd=1;
+      name=cols.slice(0,nameEnd).join(' ').trim()||('M'+(counter+imported));
+      const metas=cols.slice(nameEnd,ds);
+      fqty=metas.length>=2?Math.max(1,parseInt(metas[1])||1):(metas.length===1?Math.max(1,parseInt(metas[0])||1):1);
+      model='';
+      fl=parseFloat(cols[ds].replace(',','.'));
+      fw=parseFloat(cols[ds+1].replace(',','.'));
+      // H: màxim de tots els valors >10 entre ds+2 i el primer valor <100 (VOL)
+      fh=0;
+      for(let j=ds+2;j<Math.min(ds+8,cols.length);j++){
+        const raw=(cols[j]||'').replace(',','.').trim();
+        if(raw===''||raw==='/')continue;
+        const vv=parseFloat(raw);
+        if(isNaN(vv))continue;
+        if(vv>0&&vv<100)break; // trobem VOL, parem
+        if(vv>10)fh=Math.max(fh,vv);
+      }
+      if(fh<=0)return;
+      // Després de les 3 dimensions: [alçades extra...] [VOL] [GW] [NW]
+      fg=0;
+      const after=[];
+      for(let gi=ds+3;gi<cols.length;gi++){
+        const raw=(cols[gi]||'').replace(',','.').trim();
+        if(raw===''||raw==='/'){after.push(null);continue;}
+        const vv=parseFloat(raw);
+        after.push(isNaN(vv)?null:vv);
+      }
+      // VOL és un número petit (m³, <100); el GW és el primer pes que ve just després
+      const vi=after.findIndex(x=>x!==null&&x>0&&x<100);
+      if(vi>=0){
+        for(let k=vi+1;k<after.length;k++){if(after[k]!==null&&after[k]>=1){fg=after[k];break;}}
+      }
+      // Fallback (sense columna VOL): primer valor que no sembli una 2a alçada
+      if(fg===0){
+        for(let k=0;k<after.length;k++){
+          const x=after[k];
+          if(x===null)continue;
+          if(fh>0&&x>fh*0.6&&x<fh*1.5)continue;
+          if(x<50)continue;
+          fg=x;break;
+        }
+      }
+    }
+    if(fl>0&&fw>0&&fh>0&&!isNaN(fl)&&!isNaN(fw)&&!isNaN(fh)){
+      nm.push({id:counter+imported,name:name||('M'+(counter+imported)),model:model||'',l:fl,w:fw,h:fh,gw:fg,qty:fqty||1});
+      imported++;
+    }
+  });
+  if(imported>0){
+    machines=[...machines,...nm];
+    counter+=imported;
+    document.getElementById('pasteArea').value='';
+    renderMachineList();
+    showMsg('✅ '+imported+' models importats!','info');
+  } else {
+    showMsg('No s\'han pogut llegir dades. Comprova el format.','warn');
+  }
+}
+
+document.getElementById('pasteArea').addEventListener('paste',function(e){
+  e.preventDefault();
+  const t=e.clipboardData.getData('text');
+  if(t.trim())importText(t);
+});
+
+async function pasteFromClipboard(){
+  try{const t=await navigator.clipboard.readText();importText(t);}
+  catch{document.getElementById('pasteArea').focus();showMsg('Clica al quadre de text i prem Ctrl+V','info');}
+}
+
+// ─── Machine CRUD ──────────────────────────────────────────────
+function addMachine(){
+  const name=document.getElementById('fName').value.trim()||('Machine '+counter);
+  const model=document.getElementById('fModel').value.trim()||'';
+  const qty=Math.max(1,parseInt(document.getElementById('fQty').value)||1);
+  const l=parseFloat(document.getElementById('fL').value);
+  const w=parseFloat(document.getElementById('fW').value);
+  const h=parseFloat(document.getElementById('fH').value);
+  const gw=parseFloat(document.getElementById('fGW').value)||0;
+  if(!l||!w||!h||l<=0||w<=0||h<=0){showMsg('Introdueix dimensions vàlides (> 0)','warn');return;}
+  machines.push({id:counter++,name,model,l,w,h,gw,qty});
+  ['fName','fModel','fL','fW','fH','fGW'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fQty').value='1';
+  renderMachineList(); showMsg('','');
+}
+
+function removeMachine(id){
+  machines=machines.filter(m=>m.id!==id);
+  renderMachineList();
+  if(machines.length>0&&results)quickPack();
+}
+
+function clearMachines(){
+  if(!confirm('Eliminar totes les màquines de la llista?'))return;
+  machines=[];
+  results=null;
+  renderMachineList();
+}
+
+// ─── Dynamic qty ───────────────────────────────────────────────
+let qtyDebounce=null;
+function changeQty(id,delta){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  m.qty=Math.max(0,(m.qty||1)+delta);
+  renderMachineList();
+  if(qtyDebounce)clearTimeout(qtyDebounce);
+  qtyDebounce=setTimeout(quickPack,350);
+}
+
+function renderMachineList(){
+  const el=document.getElementById('machineList');
+  const cnt=document.getElementById('machineCount');
+  const clr=document.getElementById('clearBtn');
+  const totalUnits=machines.reduce((a,m)=>a+(m.qty||0),0);
+  cnt.textContent=machines.length>0?(machines.length+' models · '+totalUnits+' unitats'):'Cap màquina';
+  clr.style.display=machines.length>0?'block':'none';
+  if(machines.length===0){
+    el.innerHTML='<div style="text-align:center;color:#6b7a94;font-size:13px;padding:16px">Afegeix màquines per començar</div>';
+    return;
+  }
+  el.innerHTML=machines.map((m,i)=>{
+    const col=COLORS[i%COLORS.length];
+    const qty=m.qty||0;
+    const isZero=qty===0;
+    return `<div class="mi${isZero?' zero':''}">
+      <div style="min-width:0">
+        <div style="font-weight:700;font-size:12px;color:${isZero?'#4a5568':col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.name)}${m.model?'<span style="font-family:monospace;font-size:10px;color:#6b7a94;font-weight:400"> · '+esc(m.model)+'</span>':''}</div>
+        <div style="font-family:monospace;font-size:10px;color:#6b7a94">${m.l}×${m.w}×${m.h} mm &nbsp;|&nbsp; <span style="color:#f59e0b">${m.gw} kg</span></div>
+      </div>
+      <div class="qtyCtrl">
+        <button class="qtyBtn" onclick="changeQty(${m.id},-1)">−</button>
+        <span style="min-width:26px;text-align:center;color:${isZero?'#ff6b35':'#00e5a0'};font-weight:800;font-family:monospace;font-size:15px">${qty}</span>
+        <button class="qtyBtn" onclick="changeQty(${m.id},+1)">+</button>
+      </div>
+      <div style="font-family:monospace;font-size:10px;color:#0077ff;flex-shrink:0">${qty>0?(m.l*m.w*m.h/1e9*qty).toFixed(3):'—'}m³</div>
+      <button class="btnRm" onclick="removeMachine(${m.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─── Packing algorithm ─────────────────────────────────────────
+function packOnce(order,CL,CW,CH,MAX_GW){
+  const placed=[],notFit=[];
+  let totalWeight=0;
+  let free=[{x:0,y:0,z:0,l:CL,w:CW,h:CH}];
+  for(const m of order){
+    if(m.l>CL||m.w>CW||m.h>CH){notFit.push({machine:m,reason:'supera dimensions'});continue;}
+    if(totalWeight+m.gw>MAX_GW){notFit.push({machine:m,reason:'supera pes màxim'});continue;}
+    let best=null,bi=-1;
+    for(let i=0;i<free.length;i++){
+      const s=free[i];
+      if(m.l<=s.l&&m.w<=s.w&&m.h<=s.h){
+        if(!best||s.z<best.z||(s.z===best.z&&s.x<best.x)||(s.z===best.z&&s.x===best.x&&s.y<best.y)){best=s;bi=i;}
+      }
+    }
+    if(!best){notFit.push({machine:m,reason:'no hi ha espai'});continue;}
+    placed.push({machine:m,x:best.x,y:best.y,z:best.z});
+    totalWeight+=m.gw;
+    const s=best;free.splice(bi,1);
+    if(s.l-m.l>0)free.push({x:s.x+m.l,y:s.y,z:s.z,l:s.l-m.l,w:s.w,h:s.h});
+    if(s.w-m.w>0)free.push({x:s.x,y:s.y+m.w,z:s.z,l:m.l,w:s.w-m.w,h:s.h});
+    if(s.h-m.h>0)free.push({x:s.x,y:s.y,z:s.z+m.h,l:m.l,w:m.w,h:s.h-m.h});
+    free=free.filter(sp=>sp.l>0&&sp.w>0&&sp.h>0);
+  }
+  return{placed,notFit,totalWeight};
+}
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function score(r){return r.placed.length*1000000-r.totalWeight;}
+function mutate(a){const b=[...a],i=Math.floor(Math.random()*b.length),j=Math.floor(Math.random()*b.length);[b[i],b[j]]=[b[j],b[i]];return b;}
+function crossover(a,b){
+  const n=a.length,s=Math.floor(Math.random()*n),e=s+Math.floor(Math.random()*(n-s))+1;
+  const slice=new Set(a.slice(s,e).map(x=>x.id));
+  const child=[...a.slice(s,e)];
+  for(const x of b)if(!slice.has(x.id))child.push(x);
+  return child;
+}
+
+// ─── Expand by qty ─────────────────────────────────────────────
+function expandMachines(list){
+  const expanded=[];
+  for(let mi=0;mi<list.length;mi++){
+    const m=list[mi];
+    const qty=m.qty||0;
+    for(let i=0;i<qty;i++){
+      expanded.push({...m,id:m.id*1000+i,name:qty>1?m.name+' '+(i+1)+'/'+qty:m.name,colorIdx:mi});
+    }
+  }
+  return expanded;
+}
+
+function packMachines(machines,CL,CW,CH,MAX_GW){
+  const POP=80,GENS=300,ELITE=8,MUTRATE=0.3;
+  const byVol=[...machines].sort((a,b)=>(b.l*b.w*b.h)-(a.l*a.w*a.h));
+  const byGW=[...machines].sort((a,b)=>a.gw-b.gw);
+  const byL=[...machines].sort((a,b)=>b.l-a.l);
+  let pop=[byVol,byGW,byL];
+  while(pop.length<POP)pop.push(shuffle(machines));
+  let bestResult=packOnce(byVol,CL,CW,CH,MAX_GW);
+  for(let gen=0;gen<GENS;gen++){
+    const ev=pop.map(order=>{const r=packOnce(order,CL,CW,CH,MAX_GW);if(score(r)>score(bestResult))bestResult=r;return{order,r,s:score(r)};});
+    ev.sort((a,b)=>b.s-a.s);
+    const next=ev.slice(0,ELITE).map(e=>e.order);
+    while(next.length<POP){
+      let child=crossover(ev[Math.floor(Math.random()*ELITE)].order,ev[Math.floor(Math.random()*ELITE)].order);
+      if(Math.random()<MUTRATE)child=mutate(child);
+      next.push(child);
+    }
+    pop=next;
+  }
+  return bestResult;
+}
+
+// ─── Multi-pack: prova diverses estratègies, retorna la millor ──
+const VOL=m=>m.l*m.w*m.h;
+function multiPack(expanded,CL,CW,CH,MAX_GW){
+  const orders=[
+    [...expanded].sort((a,b)=>VOL(b)-VOL(a)),        // volum gran primer
+    [...expanded].sort((a,b)=>VOL(a)-VOL(b)),        // volum petit primer
+    [...expanded].sort((a,b)=>a.gw-b.gw),            // pes lleuger primer (clau si limita el pes)
+    [...expanded].sort((a,b)=>b.gw-a.gw),            // pes pesat primer
+    [...expanded].sort((a,b)=>(a.gw/VOL(a))-(b.gw/VOL(b))), // densitat baixa primer
+    [...expanded].sort((a,b)=>b.l-a.l),              // més llarg primer
+  ];
+  let best=null;
+  for(const o of orders){
+    const r=packOnce(o,CL,CW,CH,MAX_GW);
+    if(!best||r.placed.length>best.placed.length||
+       (r.placed.length===best.placed.length&&r.totalWeight<best.totalWeight))best=r;
+  }
+  return best;
+}
+
+// ─── Quick pack (recàlcul ràpid en tocar +/−) ──────────────────
+function quickPack(){
+  const CL=v('cL'),CW=v('cW'),CH=v('cH'),MAX_GW=v('cGW');
+  if(!CL||!CW||!CH)return;
+  const expanded=expandMachines(machines);
+  if(expanded.length===0){results=null;return;}
+  results=multiPack(expanded,CL,CW,CH,MAX_GW);
+  renderResults(CL,CW,CH,MAX_GW);
+  drawViews(CL,CW,CH);
+  renderLegend();
+}
+
+// ─── Maximitzar quantitats ─────────────────────────────────────
+function maximizeAll(){
+  const CL=v('cL'),CW=v('cW'),CH=v('cH'),MAX_GW=v('cGW');
+  if(!CL||!CW||!CH){showMsg('Comprova les mides del contenidor.','warn');return;}
+  if(machines.length===0){showMsg('Afegeix almenys una màquina.','warn');return;}
+  const btn=document.getElementById('maxBtn');
+  btn.disabled=true;btn.textContent='⏳ Provant estratègies...';
+  setTimeout(()=>{
+    // Màxim teòric d'unitats per model (limitat per volum i pes)
+    const capFor=m=>{
+      const byV=Math.floor((CL*CW*CH)/VOL(m))||1;
+      const byW=m.gw>0?Math.floor(MAX_GW/m.gw):byV;
+      return Math.max(1,Math.min(byV,byW));
+    };
+    // Pool: 1 de cada model marcat com a "_first" (garantit) + totes les còpies extra
+    const pool=[];
+    machines.forEach((m,mi)=>{
+      const cap=capFor(m);
+      for(let i=0;i<cap;i++)pool.push({...m,id:m.id*1000+i,colorIdx:mi,_orig:m.id,_first:i===0});
+    });
+    const firsts=pool.filter(u=>u._first), extras=pool.filter(u=>!u._first);
+    // Ordres a provar (sempre 1 de cada primer perquè cap model quedi a 0)
+    const cmps=[
+      (a,b)=>a.gw-b.gw,                          // pes lleuger primer
+      (a,b)=>VOL(b)-VOL(a),                      // volum gran primer
+      (a,b)=>VOL(a)-VOL(b),                      // volum petit primer
+      (a,b)=>(a.gw/VOL(a))-(b.gw/VOL(b)),        // densitat baixa primer
+      (a,b)=>b.gw-a.gw,                          // pes pesat primer
+    ];
+    const orders=cmps.map(c=>[...[...firsts].sort(c),...[...extras].sort(c)]);
+    // Unes quantes barreges aleatòries (firsts sempre davant) per refinar
+    for(let t=0;t<60;t++)orders.push([...shuffle(firsts),...shuffle(extras)]);
+    // Criteri: primer cobertura (models amb ≥1), després nombre total d'unitats
+    const coverage=r=>new Set(r.placed.map(p=>p.machine._orig)).size;
+    const mScore=r=>coverage(r)*1e7+r.placed.length;
+    let best=null;
+    for(const o of orders){
+      const r=packOnce(o,CL,CW,CH,MAX_GW);
+      if(!best||mScore(r)>mScore(best))best=r;
+    }
+    const counts={};
+    best.placed.forEach(p=>{counts[p.machine._orig]=(counts[p.machine._orig]||0)+1;});
+    const missing=machines.filter(m=>!(counts[m.id]>0));
+    machines.forEach(m=>{m.qty=counts[m.id]||0;});
+    renderMachineList();
+    // Mostra directament la millor disposició trobada; notFit = models que no hi caben ni 1
+    results={
+      placed:best.placed,
+      notFit:machines.filter(m=>!(m.qty>0)).map(m=>({machine:m,reason:'no hi cap ni 1 unitat'})),
+      totalWeight:best.totalWeight
+    };
+    renderResults(CL,CW,CH,MAX_GW);
+    drawViews(CL,CW,CH);
+    renderLegend();
+    btn.disabled=false;btn.textContent='🔍 CALCULAR QUANTITATS MÀXIMES';
+    if(missing.length>0){
+      showMsg('⚠️ No hi cap ni 1 unitat de: '+missing.map(m=>m.name).join(', ')+'. La resta, maximitzades ('+best.placed.length+' unitats).','warn');
+    } else {
+      showMsg('✅ Màxim: '+best.placed.length+' unitats (mínim 1 de cada). Ajusta amb +/− per recalcular.','info');
+    }
+  },20);
+}
+
+// ─── Calculate (algorisme genètic complet) ─────────────────────
+function calculate(){
+  if(machines.length===0){showMsg('Afegeix almenys una màquina.','warn');return;}
+  const CL=v('cL'),CW=v('cW'),CH=v('cH'),MAX_GW=v('cGW');
+  if(!CL||!CW||!CH){showMsg('Comprova les mides del contenidor.','warn');return;}
+  const expanded=expandMachines(machines);
+  if(expanded.length===0){showMsg('Totes les màquines tenen quantitat 0.','warn');return;}
+  const btn=document.getElementById('calcBtn');
+  btn.disabled=true;btn.textContent='⏳ Algorisme genètic en curs...';
+  showMsg('⏳ Calculant la millor distribució...','info');
+  setTimeout(()=>{
+    results=packMachines(expanded,CL,CW,CH,MAX_GW);
+    renderResults(CL,CW,CH,MAX_GW);
+    drawViews(CL,CW,CH);
+    renderLegend();
+    btn.disabled=false;btn.textContent='⚡ CALCULAR OPTIMITZACIÓ';
+    showMsg('✅ Resultat òptim — algorisme genètic (80 individus × 300 generacions).','info');
+  },20);
+}
+
+// ─── Results ──────────────────────────────────────────────────
+function renderResults(CL,CW,CH,MAX_GW){
+  if(!results)return;
+  const {placed,notFit,totalWeight}=results;
+  const volC=CL*CW*CH,volU=placed.reduce((a,p)=>a+p.machine.l*p.machine.w*p.machine.h,0);
+  const vPct=Math.min(volU/volC*100,100).toFixed(1);
+  const wPct=Math.min(totalWeight/MAX_GW*100,100).toFixed(1);
+  const wOver=totalWeight>MAX_GW;
+  const reasonCount={};
+  notFit.forEach(n=>{reasonCount[n.reason]=(reasonCount[n.reason]||0)+1;});
+  const reasonLabel={'no hi ha espai':'📐 Falta espai','supera pes màxim':'⚖️ Supera pes','supera dimensions':'📏 Massa gran'};
+  const reasonsHtml=Object.keys(reasonCount).map(r=>
+    `<div style="font-family:monospace;font-size:10px;color:#ff9068;line-height:1.5">${reasonLabel[r]||r}: <b>${reasonCount[r]}</b></div>`
+  ).join('');
+  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="sbox"><div style="font-family:monospace;font-size:10px;color:#6b7a94;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Unitats dins</div>
+      <div style="font-size:28px;font-weight:800;color:#00e5a0">${placed.length}</div>
+      <div style="font-family:monospace;font-size:11px;color:#6b7a94">de ${placed.length+notFit.length} totals</div></div>
+    <div class="sbox"><div style="font-family:monospace;font-size:10px;color:#6b7a94;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">No caben</div>
+      <div style="font-size:28px;font-weight:800;color:#ff6b35">${notFit.length}</div>
+      ${notFit.length>0?reasonsHtml:'<div style="font-family:monospace;font-size:11px;color:#6b7a94">excloses</div>'}</div>
+  </div>
+  <div style="font-family:monospace;font-size:10px;color:#6b7a94;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px">Volum ocupat</div>
+  <div class="bar"><div class="barf" style="width:${vPct}%;background:linear-gradient(90deg,#00e5a0,#0077ff)"></div></div>
+  <div style="display:flex;justify-content:space-between;font-family:monospace;font-size:11px;color:#6b7a94;margin-bottom:10px"><span>${vPct}%</span><span>${(volU/1e9).toFixed(3)} / ${(volC/1e9).toFixed(3)} m³</span></div>
+  <div style="font-family:monospace;font-size:10px;color:#6b7a94;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px">Pes total</div>
+  <div class="bar"><div class="barf" style="width:${wPct}%;background:${wOver?'linear-gradient(90deg,#ff6b35,#f00)':'linear-gradient(90deg,#00e5a0,#0077ff)'}"></div></div>
+  <div style="display:flex;justify-content:space-between;font-family:monospace;font-size:11px;color:${wOver?'#ff6b35':'#6b7a94'};margin-bottom:8px"><span>${wPct}%</span><span>${totalWeight.toLocaleString('ca')} / ${MAX_GW.toLocaleString('ca')} kg</span></div>
+  ${wOver?'<div style="padding:8px 12px;background:rgba(255,0,0,.1);border:1px solid rgba(255,0,0,.4);border-radius:5px;font-size:12px;color:#ff6060;font-weight:700;margin-bottom:8px">⚠️ PES SUPERAT!</div>':''}
+  <div style="max-height:220px;overflow-y:auto">`;
+  placed.forEach((p,i)=>{
+    const col=COLORS[(p.machine.colorIdx!==undefined?p.machine.colorIdx:i)%COLORS.length];
+    html+=`<div class="ri" style="background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.15)">
+      <div style="width:16px;height:16px;border-radius:2px;background:${col};flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:9px">${i+1}</div>
+      <span style="flex:1;font-weight:700;color:${col};font-size:12px">${esc(p.machine.name)}${p.machine.model?'<span style="font-family:monospace;font-size:10px;color:#6b7a94;font-weight:400"> · '+esc(p.machine.model)+'</span>':''}</span>
+      <span style="font-family:monospace;font-size:10px;color:#6b7a94;text-align:right">${p.machine.l}×${p.machine.w}×${p.machine.h}mm<br>${p.machine.gw}kg</span>
+    </div>`;
+  });
+  notFit.forEach(n=>{
+    html+=`<div class="ri" style="background:rgba(255,107,53,.05);border:1px solid rgba(255,107,53,.15)">
+      <span>❌</span>
+      <span style="flex:1;font-weight:700;font-size:12px">${esc(n.machine.name)}${n.machine.model?'<span style="font-family:monospace;font-size:10px;color:#6b7a94;font-weight:400"> · '+esc(n.machine.model)+'</span>':''}</span>
+      <span style="font-family:monospace;font-size:10px;color:#6b7a94">${n.reason}</span>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('resultsPanel').innerHTML=html;
+}
+
+// ─── Canvas drawing ───────────────────────────────────────────
+function drawView(canvas, placed, dimA, dimB, getA, getB, labelA, labelB, title){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.offsetWidth||700, H=380;
+  canvas.width=W; canvas.height=H;
+  const pL=58,pT=32,pR=24,pB=40;
+  const dW=W-pL-pR, dH=H-pT-pB;
+  const scale=Math.min(dW/dimA,dH/dimB);
+  const cW=dimA*scale, cH=dimB*scale;
+  const oX=pL, oY=pT;
+  const toY=vv=>oY+cH-vv*scale;
+
+  ctx.fillStyle='#0a0c0f'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#4a5568'; ctx.font='bold 11px monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(title, oX+cW/2, 4);
+
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  const mag=Math.pow(10,Math.floor(Math.log10(dimA/8)));
+  const step=mag*(dimA/mag>40?5:2);
+  for(let vv=0;vv<=dimA;vv+=step){ctx.beginPath();ctx.moveTo(oX+vv*scale,oY);ctx.lineTo(oX+vv*scale,oY+cH);ctx.stroke();}
+  for(let vv=0;vv<=dimB;vv+=step){ctx.beginPath();ctx.moveTo(oX,toY(vv));ctx.lineTo(oX+cW,toY(vv));ctx.stroke();}
+
+  ctx.fillStyle='#131820'; ctx.fillRect(oX,oY,cW,cH);
+
+  placed.forEach((p,i)=>{
+    const m=p.machine;
+    const a=getA(p), b=getB(p);
+    const ma=getA({machine:m,x:m.l,y:m.w,z:m.h})-getA({machine:m,x:0,y:0,z:0});
+    const mb=getB({machine:m,x:m.l,y:m.w,z:m.h})-getB({machine:m,x:0,y:0,z:0});
+    const rx=oX+a*scale, ry=toY(b+mb);
+    const rw=Math.max(ma,0)*scale, rh=Math.max(mb,0)*scale;
+    const col=COLORS[(m.colorIdx!==undefined?m.colorIdx:i)%COLORS.length];
+    ctx.fillStyle=col+'28'; ctx.fillRect(rx,ry,rw,rh);
+    ctx.save(); ctx.beginPath(); ctx.rect(rx,ry,rw,rh); ctx.clip();
+    ctx.strokeStyle=col+'18'; ctx.lineWidth=1;
+    for(let d=-rw;d<rh;d+=12){ctx.beginPath();ctx.moveTo(rx,ry+d+rw);ctx.lineTo(rx+rw,ry+d);ctx.stroke();}
+    ctx.restore();
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.strokeRect(rx,ry,rw,rh);
+    const minD=Math.min(rw,rh);
+    if(minD>10){
+      const fs=Math.max(7,Math.min(12,minD*0.22));
+      ctx.save(); ctx.beginPath(); ctx.rect(rx+2,ry+2,rw-4,rh-4); ctx.clip();
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      if(rh>fs*3.2){
+        ctx.fillStyle=col; ctx.font='bold '+fs+'px monospace';
+        ctx.fillText(m.name, rx+rw/2, ry+rh/2-fs*0.8);
+        ctx.fillStyle=col+'99'; ctx.font=(fs-1)+'px monospace';
+        ctx.fillText(m.model||'', rx+rw/2, ry+rh/2+fs*0.7);
+      } else if(rh>fs*1.5){
+        ctx.fillStyle=col; ctx.font='bold '+fs+'px monospace';
+        ctx.fillText(m.name, rx+rw/2, ry+rh/2);
+      }
+      ctx.restore();
+      const bw=Math.max(14,fs+4);
+      ctx.fillStyle=col; ctx.fillRect(rx,ry,bw,14);
+      ctx.fillStyle='#000'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(''+(i+1), rx+bw/2, ry+7);
+    }
+  });
+
+  ctx.strokeStyle='#00e5a0'; ctx.lineWidth=2; ctx.strokeRect(oX,oY,cW,cH);
+  ctx.fillStyle='#6b7a94'; ctx.font='10px monospace';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let i=0;i<=6;i++){const vv=Math.round(dimA/6*i);ctx.fillText(vv,oX+vv*scale,oY+cH+5);}
+  ctx.fillStyle='#4a5568'; ctx.fillText(labelA, oX+cW/2, oY+cH+22);
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=5;i++){const vv=Math.round(dimB/5*i);ctx.fillStyle='#6b7a94';ctx.fillText(vv,oX-6,toY(vv));}
+  ctx.save(); ctx.translate(14,oY+cH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#4a5568'; ctx.font='10px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(labelB,0,0); ctx.restore();
+  ctx.strokeStyle='#4a5568'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(oX,toY(0)); ctx.lineTo(oX+cW,toY(0)); ctx.stroke();
+}
+
+function drawViews(CL,CW,CH){
+  if(!results)return;
+  const {placed}=results;
+  drawView(document.getElementById('topCanvas'), placed, CL, CW,
+    p=>p.x, p=>p.y, 'LLARG → (mm)', 'AMPLE (mm)', '▼ VISTA DES DE DALT  (Llarg × Ample)');
+  document.getElementById('topLabel').textContent='VISTA DE PLANTA — '+placed.length+' unitats col·locades';
+  drawView(document.getElementById('sideCanvas'), placed, CL, CH,
+    p=>p.x, p=>p.z, 'LLARG → (mm)', 'ALÇADA (mm)', '▼ VISTA DE COSTAT  (Llarg × Alçada)');
+  document.getElementById('sideLabel').textContent='VISTA DE COSTAT — '+placed.length+' unitats col·locades';
+}
+
+function renderLegend(){
+  if(!results)return;
+  const panel=document.getElementById('legendPanel');
+  const body=document.getElementById('legendBody');
+  panel.style.display='block';
+  body.innerHTML=results.placed.map((p,i)=>{
+    const col=COLORS[(p.machine.colorIdx!==undefined?p.machine.colorIdx:i)%COLORS.length];
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:monospace;padding:2px 0">
+      <div style="width:16px;height:16px;border-radius:2px;background:${col};flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:9px">${i+1}</div>
+      <span style="color:${col};font-weight:700">${esc(p.machine.name)}</span>
+      ${p.machine.model?'<span style="color:#6b7a94">·'+esc(p.machine.model)+'</span>':''}
+      <span style="color:#4a5568;margin-left:auto">${p.machine.l}×${p.machine.w}×${p.machine.h}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── UI helpers ───────────────────────────────────────────────
+function showMsg(text, type){
+  const el=document.getElementById('msgBox');
+  if(!text){el.style.display='none';return;}
+  el.style.display='block';
+  el.style.background=type==='warn'?'rgba(255,107,53,.1)':'rgba(0,119,255,.1)';
+  el.style.border='1px solid '+(type==='warn'?'rgba(255,107,53,.3)':'rgba(0,119,255,.3)');
+  el.style.color=type==='warn'?'#ff9068':'#4da6ff';
+  el.textContent=text;
+}
+
+// Init
+renderMachineList();
+updateHeader();
+</script>
+</body>
+</html>
